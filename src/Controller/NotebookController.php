@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Contact;
 use App\Form\ContactType;
+use App\Repository\ContactRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,16 +19,21 @@ class NotebookController extends AbstractController
     /**
      * @Route("/notebook/list", name="contact_list", methods={"GET"})
      */
-    public function list(): Response
+    public function list(Request $request): Response
     {
+        /** @var ContactRepository $repository */
         $repository = $this
             ->getDoctrine()
-            ->getManager()
             ->getRepository(Contact::class);
 
-        $contacts = $repository->findAll();
+        $contacts = $repository->getContactList(
+            $request->get('limit', 10),
+            $request->get('offset', 0)
+        );
 
-        return $this->render('contact/list.html.twig', ['contacts' => $contacts]);
+        return $this->render('contact/list.html.twig', [
+            'contacts' => $contacts,
+        ]);
     }
 
     /**
@@ -37,10 +43,12 @@ class NotebookController extends AbstractController
     {
         $repository = $this
             ->getDoctrine()
-            ->getManager()
             ->getRepository(Contact::class);
 
         $contact = $repository->findOneBy(['id' => $id]);
+        if (!$contact) {
+            throw $this->createNotFoundException('Contact not found');
+        }
 
         return $this->render('contact/show.html.twig', ['contact' => $contact]);
     }

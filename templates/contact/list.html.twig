@@ -5,6 +5,7 @@
 
     <table>
         <tr>
+            <td>Id</td>
             <td>Name</td>
             <td>Email</td>
             <td>Phone number</td>
@@ -12,6 +13,7 @@
         </tr>
         {% for contact in contacts %}
             <tr>
+                <td>{{ contact.id }}</td>
                 <td>{{ contact.name }}</td>
                 <td>{{ contact.email }}</td>
                 <td>{{ contact.phoneNumber }}</td>

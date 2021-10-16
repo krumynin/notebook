@@ -3,9 +3,11 @@
 {% block body %}
     <h1>Show contact</h1>
 
+    <div>Id {{ contact.id }}</div>
     <div>Name {{ contact.name }}</div>
     <div>Company {{ contact.company }}</div>
     <div>Email {{ contact.email }}</div>
     <div>Phone number {{ contact.phoneNumber }}</div>
-    <div>Photo <img src="{{ asset('public/images/{{ contact.photoFilename}}') }}"></div>
+    <div>Date of birth {{ contact.birth | date('Y-m-d') }}</div>
+    <div>Photo <img src="{{ asset('uploads/contacts/' ~ contact.photoFilename) }}" width="189" height="255"></div>
 {% endblock %}
