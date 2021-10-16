@@ -1,0 +1,41 @@
+{% extends "base.html.twig" %}
+
+{% block body %}
+    <h1>Contact list</h1>
+
+    <table>
+        <tr>
+            <td>Name</td>
+            <td>Email</td>
+            <td>Phone number</td>
+            <td>Delete</td>
+        </tr>
+        {% for contact in contacts %}
+            <tr>
+                <td>{{ contact.name }}</td>
+                <td>{{ contact.email }}</td>
+                <td>{{ contact.phoneNumber }}</td>
+                <td><button class="contact_delete" data-id="{{ contact.id }}">delete</button></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        $(function () {
+            $('.contact_delete').on('click', function () {
+                let id = Number($(this).data('id'));
+                $.ajax({
+                    url: '/notebook/delete/' + id,
+                    type: 'DELETE',
+                    success: function() {
+                        location.reload();
+                    }
+                });
+            })
+        });
+    </script>
+{% endblock %}

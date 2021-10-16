@@ -1,0 +1,11 @@
+{% extends "base.html.twig" %}
+
+{% block body %}
+    <h1>Show contact</h1>
+
+    <div>Name {{ contact.name }}</div>
+    <div>Company {{ contact.company }}</div>
+    <div>Email {{ contact.email }}</div>
+    <div>Phone number {{ contact.phoneNumber }}</div>
+    <div>Photo <img src="{{ asset('public/images/{{ contact.photoFilename}}') }}"></div>
+{% endblock %}
