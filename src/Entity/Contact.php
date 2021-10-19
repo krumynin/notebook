@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity(repositoryClass=ContactRepository::class)
  * @ORM\Table(name="contacts")
  */
-class Contact
+class Contact implements \JsonSerializable
 {
     /**
      * @ORM\Id()
@@ -111,5 +111,18 @@ class Contact
     public function setPhotoFilename(?string $photoFilename): void
     {
         $this->photoFilename = $photoFilename;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'company' => $this->getCompany(),
+            'phoneNumber' => $this->getPhoneNumber(),
+            'email' => $this->getEmail(),
+            'birth' => $this->getBirth(),
+            'photo' => $this->getPhotoFilename(),
+        ];
     }
 }

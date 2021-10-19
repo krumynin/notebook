@@ -6,20 +6,35 @@ use App\Entity\Contact;
 use App\Form\ContactType;
 use App\Repository\ContactRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use OpenApi\Annotations as OA;
 
 class NotebookController extends AbstractController
 {
     /**
-     * @Route("/notebook/list", name="contact_list", methods={"GET"})
+     * @Route("/notebook", methods={"GET"})
+     * )
+     * @OA\Parameter(
+     *     name="limit",
+     *     in="query",
+     *     description="Limit of contacts",
+     *     @OA\Schema(type="string")
+     * )
+     * )
+     * @OA\Parameter(
+     *     name="offset",
+     *     in="query",
+     *     description="Offset for paging",
+     *     @OA\Schema(type="string")
+     * )
      */
-    public function list(Request $request): Response
+    public function list(Request $request): JsonResponse
     {
         /** @var ContactRepository $repository */
         $repository = $this
@@ -31,15 +46,13 @@ class NotebookController extends AbstractController
             $request->get('offset', 0)
         );
 
-        return $this->render('contact/list.html.twig', [
-            'contacts' => $contacts,
-        ]);
+        return new JsonResponse(['contacts' => $contacts]);
     }
 
     /**
-     * @Route("/notebook/show/{id}", name="contact_show", methods={"GET"})
+     * @Route("/notebook/{id}", methods={"GET"})
      */
-    public function show(int $id): Response
+    public function show(int $id): JsonResponse
     {
         $repository = $this
             ->getDoctrine()
@@ -50,59 +63,53 @@ class NotebookController extends AbstractController
             throw $this->createNotFoundException('Contact not found');
         }
 
-        return $this->render('contact/show.html.twig', ['contact' => $contact]);
+        return new JsonResponse(['contact' => $contact]);
     }
 
     /**
-     * @Route("/notebook/create", name="contact_create", methods={"GET","POST"})
+     * @Route("/notebook", methods={"POST"})
      */
-    public function create(Request $request, SluggerInterface $slugger): Response
+    public function create(Request $request, SluggerInterface $slugger): JsonResponse
     {
         $contact = new Contact();
         $form = $this->createForm(ContactType::class, $contact);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            /** @var UploadedFile $photoFile */
-            $photoFile = $form->get('photo')->getData();
-
-            if ($photoFile) {
-                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
-
-                try {
-                    $photoFile->move(
-                        $this->getParameter('contacts_directory'),
-                        $newFilename
-                    );
-                } catch (FileException $e) {
-                    $form->addError(new FormError('File error upload'));
-
-                    return $this->renderForm('contact/create.html.twig', [
-                        'form' => $form,
-                    ]);
-                }
-
-                $contact->setPhotoFilename($newFilename);
-            }
-
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($contact);
-            $em->flush();
-
-            return $this->redirectToRoute('contact_list');
+        if (!$form->isValid()) {
+            return new JsonResponse($form->getErrors(), Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->renderForm('contact/create.html.twig', [
-            'form' => $form,
-        ]);
+        /** @var UploadedFile $photoFile */
+        $photoFile = $form->get('photo')->getData();
+
+        if ($photoFile) {
+            $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+            try {
+                $photoFile->move(
+                    $this->getParameter('contacts_directory'),
+                    $newFilename
+                );
+            } catch (FileException $e) {
+                return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $contact->setPhotoFilename($newFilename);
+        }
+
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($contact);
+        $em->flush();
+
+        return new JsonResponse();
     }
 
     /**
-     * @Route("/notebook/update/{id}", name="contact_update", methods={"GET","POST"})
+     * @Route("/notebook/{id}", methods={"POST"})
      */
-    public function update(Request $request, SluggerInterface $slugger): Response
+    public function update(Request $request, SluggerInterface $slugger): JsonResponse
     {
         $em = $this
             ->getDoctrine()
@@ -113,46 +120,40 @@ class NotebookController extends AbstractController
         $form = $this->createForm(ContactType::class, $contact);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            /** @var UploadedFile $photoFile */
-            $photoFile = $form->get('photo')->getData();
-
-            if ($photoFile) {
-                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
-
-                try {
-                    $photoFile->move(
-                        $this->getParameter('contacts_directory'),
-                        $newFilename
-                    );
-                } catch (FileException $e) {
-                    $form->addError(new FormError('File error upload'));
-
-                    return $this->renderForm('contact/update.html.twig', [
-                        'form' => $form,
-                    ]);
-                }
-
-                $contact->setPhotoFilename($newFilename);
-            }
-
-            $em->persist($contact);
-            $em->flush();
-
-            return $this->redirectToRoute('contact_show', ['id' => $contact->getId()]);
+        if ($form->isValid()) {
+            return new JsonResponse($form->getErrors(), Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->renderForm('contact/update.html.twig', [
-            'form' => $form,
-        ]);
+        /** @var UploadedFile $photoFile */
+        $photoFile = $form->get('photo')->getData();
+
+        if ($photoFile) {
+            $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+            try {
+                $photoFile->move(
+                    $this->getParameter('contacts_directory'),
+                    $newFilename
+                );
+            } catch (FileException $e) {
+                return new JsonResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $contact->setPhotoFilename($newFilename);
+        }
+
+        $em->persist($contact);
+        $em->flush();
+
+        return new JsonResponse();
     }
 
     /**
-     * @Route("/notebook/delete/{id}", name="contact_delete", methods={"DELETE"})
+     * @Route("/notebook/{id}", methods={"DELETE"})
      */
-    public function delete(int $id): Response
+    public function delete(int $id): JsonResponse
     {
         $em = $this
             ->getDoctrine()
@@ -167,6 +168,6 @@ class NotebookController extends AbstractController
         $em->remove($contact);
         $em->flush();
 
-        return new Response('success');
+        return new JsonResponse();
     }
 }
