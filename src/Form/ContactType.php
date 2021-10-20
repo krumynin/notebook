@@ -4,13 +4,10 @@ namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
 use App\Entity\Contact;
-use Symfony\Component\Form\Extension\Core\Type\FileType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\File;
 
 class ContactType extends AbstractType
 {
@@ -37,22 +34,6 @@ class ContactType extends AbstractType
                 'label' => 'Date of birth',
                 'required' => true,
             ])
-            ->add('photo', FileType::class, [
-                'label' => 'Photo',
-                'mapped' => false,
-                'required' => false,
-                'constraints' => [
-                    new File([
-                        'mimeTypes' => [
-                            'image/*',
-                            'application/pdf',
-                            'application/x-pdf',
-                        ],
-                        'mimeTypesMessage' => 'Please upload a valid image',
-                    ])
-                ],
-            ])
-            ->add('save', SubmitType::class, ['label' => 'Save'])
         ;
     }
 
@@ -60,6 +41,8 @@ class ContactType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Contact::class,
+            'csrf_protection' => false,
+            'allow_extra_fields' => true,
         ]);
     }
 }

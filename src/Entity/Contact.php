@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ContactRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=ContactRepository::class)
@@ -19,6 +20,8 @@ class Contact implements \JsonSerializable
     private int $id;
 
     /**
+     * @Assert\NotBlank
+     *
      * @ORM\Column(type="string", length=255, nullable=false)
      */
     private string $name;
@@ -29,11 +32,15 @@ class Contact implements \JsonSerializable
     private ?string $company;
 
     /**
+     * @Assert\NotBlank
+     *
      * @ORM\Column(type="string", length=255, nullable=false)
      */
     private string $phoneNumber;
 
     /**
+     * @Assert\NotBlank
+     *
      * @ORM\Column(type="string", length=255, nullable=false)
      */
     private string $email;
