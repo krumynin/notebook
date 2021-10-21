@@ -7,7 +7,7 @@ class Base64FileExtractor
     public function extractBase64String(string $base64Content): string
     {
         $data = explode( ';base64,', $base64Content);
-        return $data[1];
+        return $data[1] ?? $data[0];
 
     }
 }

@@ -29,7 +29,6 @@ class NotebookController extends AbstractController
      *     description="Limit of contacts",
      *     @OA\Schema(type="string")
      * )
-     *
      * @OA\Parameter(
      *     name="offset",
      *     in="query",
